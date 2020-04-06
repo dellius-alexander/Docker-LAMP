@@ -1,1 +1,1 @@
-#:::no-loc text="DOCKER COMPOSE LAMP":::
+# DOCKER COMPOSE LAMP

@@ -1,0 +1,137 @@
+#############################################################################################################
+# Start your application services by typing at the Docker CLI:
+#     ~$> docker-compose -f <"a unique name">.docker-compose.yml up -d
+# Shutdown services with the Docker CLI command: 
+#     ~$> docker-compose -f  <"a unique name">.docker-compose.yml down --remove-orphans
+#     The "--remove-orphans" flag is used to remove any child container instances that may have been created
+#############################################################################################################
+#
+version: "3.7"
+services:  
+########################################## MYSQL Database #########################################
+  db:
+    image: mysql:5.7.28                   # Enter your image <Name>:<Tag>
+    init: true                            
+    container_name: db
+    ########################### Define you ENVIRONMENT Variables ##################################
+    environment:
+      MYSQL_HISTFILE: '/var/log/.mysql_history'
+      # MySQL allow empty password variable
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+      # Name of the database
+      #MYSQL_DATABASE: '<DB name>'
+      #MYSQL_HOST: '<hostname>'
+      # Provide a username for your MySQL instance
+      MYSQL_USER: 'user'
+      # Provide a password for your MySQL instance
+      MYSQL_PASSWORD: 'developer'
+      # Password for root access
+      MYSQL_ROOT_PASSWORD: 'developer'
+    ################################ Define you Volume Bind Mounts ################################
+    volumes: #- <HOST>:<CONTAINER>
+    # Select the correct OS volume format
+      - .\mysql:/var/lib/mysql           # Windows OS: [REQUIRED] MySQL Data directory
+      #- ./mysql:/var/lib/mysql           # Linux/Mac OS: [REQUIRED] MySQL Data directory
+      - .\logs\mysql-log:/var/log        # Windows OS: [OPTIONAL] MySQL Log directory
+      #- ./logs/mysql-log:/var/log        # Linux/Mac OS: [OPTIONAL] MySQL Log directory
+    # Uncomment your restart policy
+    #restart: "no"                        # [OPTIONAL] On failure do not restart
+    #restart: always                      # [OPTIONAL] Always restart, even after system shutdown
+    restart: on-failure                   # [OPTIONAL] Best the restart on failure
+    #restart: unless-stopped              # [OPTIONAL]  
+    ##################################### Define and Expose Your Ports ############################
+    # Expose AND Define <INTERNAL>:<EXTERNAL> container ports to support your services
+    expose:
+      - 3306
+    ports:  <
+      - 3306:3306
+      - 33060:33060
+    ########################### Define Network Protocols ##########################################
+    networks:
+      lamp-network:
+        ipv4_address: 172.16.238.9    # IPv4 Default Gateway  172.16.238.1
+        #ipv6_address: 2001:3984:3989::9   # IPv6 Default Gateway
+    ####################### Run Commands after the container starts ############################### 
+    command: ["--default-authentication-plugin=mysql_native_password"]
+        #command: ["mysqld --verbose --help"]
+########################## Adminer : Standalone DBMS Formally PHPMyAdmin ##########################
+  adminer:
+    image:  adminer:standalone
+    container_name: adminer    
+    environment:
+      ADMINER_DEFAULT_SERVER: db # The Name DB service defined above above 
+    #restart: "no"
+    #restart: always
+    restart: on-failure
+    #restart: unless-stopped
+    ports:
+      - 55002:8080
+    networks:
+      lamp-network:
+        ipv4_address: 172.16.238.8      # default gateway  172.16.238.1
+        #ipv6_address: 2001:3984:3989::8  
+    links: 
+      - yaw_db
+    depends_on:
+      - yaw_db
+    command: ['apt-get update && apt-get upgrade -y']
+    # command: ['apt-get install -y tcl-tls tcl8.6-tdbc-mysql mysql-common']
+####################################### PHP #######################################################   
+  php:
+    build:
+        context: ./Dockerfile
+        dockerfile: php.Dockerfile
+    container_name: www
+    init: true
+    environment:
+      APACHE_RUN_DIR: /var/www/html
+      APACHE_LOG_DIR: /var/log
+      PHP_LOG_DIR: /var/log
+      error_log: /var/log
+      docref_root: /var/www/manual
+    volumes:
+      # Website directory volume
+      - .\www:/var/www/html
+      # PHP.ini configuration file location
+      - .\assets\php:/usr/local/etc/php
+      # MySQL SSL Location
+      #- .\assets\mysql-ssl:/etc/ssl/mysql/
+      # Log director
+      - .\logs\www-log:/var/log
+      # Manual Pages
+      - .\www\assets\manual:/var/www/html/assets/manual
+      # Path to extension directory
+      #- .\php-ext:/usr/local/etc/php/php-ext
+    #*** Restart Policy ***#  
+    #restart: "no"
+    #restart: always
+    restart: on-failure
+    #restart: unless-stopped
+    expose:
+      - 80
+    ports: 
+      - 55001:80
+    networks:
+      lamp-network:
+        ipv4_address: 172.16.238.10     # default gateway  172.16.238.1
+        #ipv6_address: 2001:3984:3989::10
+    links: 
+      - yaw_db
+    depends_on:
+      - yaw_db  
+    # command: ["docker-php-ext-install mysqli","docker-php-ext-install ",
+    # "pecl install memcached && docker-php-ext-enable memcached"]
+################################# volumes ################################
+# since we are using direct access to host directories, we do not need to 
+# declare any virtual volume mounts
+################################ NETWORK #################################  
+networks:
+  lamp-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/28
+          #gateway: 172.16.238.1
+        - subnet: 2001:3984:3989::/64
+          #gateway: 2001:3984:3989::1
