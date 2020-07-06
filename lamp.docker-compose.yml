@@ -43,7 +43,7 @@ services:
     # Expose AND Define <INTERNAL>:<EXTERNAL> container ports to support your services
     expose:
       - 3306
-    ports:  <
+    ports:  # <host>:<container>
       - 3306:3306
       - 33060:33060
     ########################### Define Network Protocols ##########################################
@@ -78,9 +78,7 @@ services:
     # command: ['apt-get install -y tcl-tls tcl8.6-tdbc-mysql mysql-common']
 ####################################### PHP #######################################################   
   php:
-    build:
-        context: ./Dockerfile
-        dockerfile: php.Dockerfile
+    image: dalexander2israel/php:7.2-apache-mysqli 
     container_name: www
     init: true
     environment:
@@ -89,7 +87,8 @@ services:
       PHP_LOG_DIR: /var/log
       error_log: /var/log
       docref_root: /var/www/manual
-    volumes:
+    volumes:  # note volume format in Windows OS format; change to linux/mac os if applicable
+      # Format: - <host directory>:<container directory>
       # Website directory volume
       - .\www:/var/www/html
       # PHP.ini configuration file location
