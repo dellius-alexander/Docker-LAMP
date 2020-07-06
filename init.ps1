@@ -13,7 +13,7 @@
 #------------------- Enter Your Configuration File Names Below -----------------------------------#
 #-------------------------------------------------------------------------------------------------#
 # Enter the name of your docker-compose file below
-$global:DockerComposeFile = "youareworthy.docker-compose.yml"
+$global:DockerComposeFile = "lamp.docker-compose.yml"
 
 # Directory structure of your application ROOT
 $global:DIR = @{
