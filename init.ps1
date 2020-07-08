@@ -173,10 +173,10 @@ $displayMessage = $("`n`n`n############################################## HELP C
 $answers = @("docker-compose -f $DockerComposeFile down","exit","stop service","stop","quit")
 # Start service and wait for customer response to exit service
 do {
-    $input = Read-Host -Prompt $displayMessage
+    $response_input = Read-Host -Prompt $displayMessage
     "`n"
     foreach ($item in $answers) {
-        $response = ($input.Contains($item))
+        $response = ($response_input.Contains($item))
         if ($response -eq $true) { # if the input is valid we break
             break
         } # else keep checking    
@@ -185,12 +185,12 @@ do {
         # check user input a valid response
         break
     }
-    elseif ($input -eq ""){
+    elseif ($response_input -eq ""){
         # we do nothing, if they hit enter on the keyboard
         continue
     }
     else { # we display error on incorrect input
-        Write-Host "That was not a valid input!!!`n`t[ $input ]`nPlease try again!!!`n" -ForegroundColor Red
+        Write-Host "That was not a valid input!!!`n`t[ $response_input ]`nPlease try again!!!`n" -ForegroundColor Red
         $displayMessage
     }
   
